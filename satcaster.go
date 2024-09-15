@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"log"
+	"net/http"
 
 	"github.com/ungerik/go3d/vec3"
 
@@ -11,10 +12,12 @@ import (
 	"athaeryn.com/satcaster/scene"
 )
 
-func main() {
-	// light := vec3.T{10, 10, 5}
-	// sphere1 := scene.Sphere{Position: vec3.T{0, 0, -5}, Radius: 2}
-	// sphere2 := scene.Sphere{Position: vec3.T{-2.75, -0.5, -6}, Radius: 0.5}
+func handler(w http.ResponseWriter, r *http.Request) {
+	log.Default().Output(2, r.URL.String())
+	fmt.Fprintf(w, "%s", renderImage())
+}
+
+func renderImage() string {
 	light := vec3.T{10, 0, 0}
 	sphere1 := scene.Sphere{Position: vec3.T{0, 0, -10}, Radius: 2}
 	sphere2 := scene.Sphere{Position: vec3.T{3, 0, -7}, Radius: 0.5}
@@ -25,26 +28,15 @@ func main() {
 
 	renderer.RenderToPixelbuffer(scene, &pixels)
 
-	// print_display(&pixels)
 	pgm := generatePgm(&pixels)
-	_ = os.WriteFile("./render.pgm", []byte(pgm), 0644)
+	// _ = os.WriteFile("./render.pgm", []byte(pgm), 0644)
+	return pgm
 }
 
-/*
-func print_display(pixels *pixelbuffer.T) {
-	for y := 0; y < (*pixels).Height; y++ {
-		var line string
-		for x := 0; x < (*pixels).Width; x++ {
-			if pixelbuffer.Get(pixels, x, y) > 0 {
-				line += "()"
-			} else {
-				line += "<>"
-			}
-		}
-		fmt.Println(line)
-	}
+func main() {
+	http.HandleFunc("/", handler)
+	log.Fatal(http.ListenAndServe(":8888", nil))
 }
-*/
 
 func generatePgm(pixels *pixelbuffer.T) string {
 	var buffer string
