@@ -50,7 +50,7 @@ module Vec2: {
   }
 }
 
-let makePoints = (): array<Vec2.t> => {
+let makePoints = (): (array<Vec2.t>, array<(int, int, int)>) => {
   let radius = 50.
   let center = (100., 100.)
 
@@ -65,40 +65,46 @@ let makePoints = (): array<Vec2.t> => {
     pts->Array.push(p)
   }
 
-  pts
+  let triangles = [(0, 1, 2), (0, 2, 3), (0, 3, 4), (0, 4, 5), (0, 5, 1)]
+
+  (pts, triangles)
 }
 
 @react.component
 let make = () => {
-  let points = React.useMemo0(makePoints)
-  let (count, setCount) = React.useState(() => 0)
+  let (points, triangles) = React.useMemo0(makePoints)
 
-  <div className="p-6">
-    <h1 className="text-3xl font-semibold"> {"What is this about?"->React.string} </h1>
-    <p>
-      {React.string("This is a simple template for a Vite project using ReScript & Tailwind CSS.")}
-    </p>
-    <h2 className="text-2xl font-semibold mt-5"> {React.string("Fast Refresh Test")} </h2>
-    <Button onClick={_ => setCount(count => count + 1)}>
-      {React.string(`count is ${count->Int.toString}`)}
-    </Button>
-    <p>
-      {React.string("Edit ")}
-      <code> {React.string("src/App.res")} </code>
-      {React.string(" and save to test Fast Refresh.")}
-    </p>
-    <svg width="400" height="400" viewBox="0 0 200 200" className="border">
-      <style> {"text { font: 10px monospace; }"->React.string} </style>
-      {points
-      ->Array.mapWithIndex(((x, y), i) => {
-        <React.Fragment key={i->Int.toString}>
-          <rect width="2" height="2" fill="black" x={x->Float.toString} y={y->Float.toString} />
-          <text x={(x +. 4.)->Float.toString} y={(y -. 2.)->Float.toString}>
-            {i->Int.toString->React.string}
-          </text>
-        </React.Fragment>
-      })
-      ->React.array}
-    </svg>
-  </div>
+  <svg width="400" height="400" viewBox="0 0 200 200" className="border">
+    <style> {"text { font: 10px monospace; }"->React.string} </style>
+    {triangles
+    ->Array.mapWithIndex((triangle, i) => {
+      let (a, b, c) = triangle
+      let verts = [a, b, c]
+      let pts =
+        verts
+        ->Array.map(v => {
+          let (x, y) = points->Array.getUnsafe(v)
+          `${x->Float.toString},${y->Float.toString}`
+        })
+        ->Array.join(" ")
+      <polygon key={i->Int.toString} points=pts fill="none" stroke="black" />
+    })
+    ->React.array}
+    {points
+    ->Array.mapWithIndex(((x, y), i) => {
+      <React.Fragment key={i->Int.toString}>
+        <rect
+          width="2"
+          height="2"
+          fill="red"
+          x={(x -. 1.)->Float.toString}
+          y={(y -. 1.)->Float.toString}
+        />
+        <text x={(x +. 4.)->Float.toString} y={(y -. 2.)->Float.toString}>
+          {i->Int.toString->React.string}
+        </text>
+      </React.Fragment>
+    })
+    ->React.array}
+  </svg>
 }
